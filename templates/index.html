@@ -26,48 +26,6 @@
         </div>
     </div>
 
-    <script>
-        const video = document.getElementById('video');
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(stream => { video.srcObject = stream; })
-            .catch(err => { alert("Camera Error: " + err); });
-
-        document.getElementById('snap').addEventListener('click', async () => {
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result_area').classList.add('hidden');
-
-            const canvas = document.getElementById('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            const imageData = canvas.toDataURL('image/jpeg');
-
-            try {
-                const response = await fetch('/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: imageData })
-                });
-                const data = await response.json();
-
-                if (data.error) {
-                    alert("Error: " + data.error);
-                } else {
-                    document.getElementById('result_img').src = data.image;
-                    document.getElementById('result_text').innerText = data.text;
-                    
-                    const audio = document.getElementById('audio_player');
-                    audio.src = "data:audio/mp3;base64," + data.audio;
-                    audio.play().catch(e => console.log("Auto-play blocked"));
-                    
-                    document.getElementById('result_area').classList.remove('hidden');
-                }
-            } catch (e) {
-                alert("Network Error");
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
-        });
-    </script>
+    <script src="/static/script.js"></script>
 </body>
 </html>
