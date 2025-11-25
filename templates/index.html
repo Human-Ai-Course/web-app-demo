@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI CAM</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <img src="/static/icon.jpg" class="app-icon" alt="App Icon">
+        
+        <h1>AI CAM</h1>
+        <p>Object Detection & Voice Analysis</p>
+
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas" class="hidden"></canvas>
+        <br>
+        <button id="snap">👁️ SCAN OBJECT</button>
+        <p id="loading">🔄 Analyzing...</p>
+
+        <div id="result_area" class="hidden">
+            <img id="result_img" src="">
+            <div id="result_text"></div>
+            <audio id="audio_player" controls autoplay></audio>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => { video.srcObject = stream; })
+            .catch(err => { alert("Camera Error: " + err); });
+
+        document.getElementById('snap').addEventListener('click', async () => {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result_area').classList.add('hidden');
+
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const imageData = canvas.toDataURL('image/jpeg');
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageData })
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    alert("Error: " + data.error);
+                } else {
+                    document.getElementById('result_img').src = data.image;
+                    document.getElementById('result_text').innerText = data.text;
+                    
+                    const audio = document.getElementById('audio_player');
+                    audio.src = "data:audio/mp3;base64," + data.audio;
+                    audio.play().catch(e => console.log("Auto-play blocked"));
+                    
+                    document.getElementById('result_area').classList.remove('hidden');
+                }
+            } catch (e) {
+                alert("Network Error");
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
