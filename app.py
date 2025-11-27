@@ -1,4 +1,3 @@
-%%writefile app.py
 from flask import Flask, render_template, request, jsonify
 import boto3
 import cv2
